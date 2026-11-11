@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INTERSTELLAR // Gargantua & The Tesseract</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #030408;
+      --gold-primary: #ff9d3b;
+      --gold-bright: #ffe6b8;
+      --cyan-accent: #6ec6ff;
+      --glass-bg: rgba(8, 11, 20, 0.72);
+      --glass-border: rgba(255, 175, 95, 0.24);
+      --text-main: #f3ede2;
+      --text-dim: rgba(243, 237, 226, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    #glcanvas, #overlayCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #glcanvas {
+      z-index: 1;
+    }
+
+    #overlayCanvas {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Cinematic letterbox bars */
+    .letterbox {
+      position: fixed;
+      left: 0;
+      width: 100%;
+      height: 4.5vh;
+      background: #000;
+      z-index: 3;
+      transition: height 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+    }
+    .letterbox.top { top: 0; border-bottom: 1px solid rgba(255, 160, 70, 0.12); }
+    .letterbox.bottom { bottom: 0; border-top: 1px solid rgba(255, 160, 70, 0.12); }
+    body.cinema-mode .letterbox { height: 8vh; }
+    body.cinema-mode .hud-hideable { opacity: 0; pointer-events: none; }
+
+    /* Top Telemetry Header */
+    .top-hud {
+      position: fixed;
+      top: calc(4.5vh + 20px);
+      left: 32px;
+      right: 32px;
+      z-index: 4;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    .brand-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mission-tag {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+    }
+
+    .title-main {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      color: var(--gold-bright);
+      text-shadow: 0 0 24px rgba(255, 157, 59, 0.45);
+    }
+
+    .subtitle-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-top: 2px;
+      min-height: 20px;
+      transition: opacity 0.8s ease;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 18px 28px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 12px 20px;
+      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .telemetry-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .telemetry-label {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .telemetry-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gold-bright);
+      letter-spacing: 0.08em;
+      margin-top: 3px;
+    }
+
+    /* Scene Selector Pills */
+    .scene-selector {
+      position: fixed;
+      right: 32px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: opacity 0.6s ease;
+    }
+
+    .scene-btn {
+      background: var(--glass-bg);
+      border: 1px solid rgba(255, 175, 95, 0.18);
+      color: var(--text-dim);
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 3px;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .scene-btn::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 157, 59, 0.25);
+      transition: all 0.3s ease;
+    }
+
+    .scene-btn:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 175, 95, 0.5);
+      transform: translateX(-3px);
+    }
+
+    .scene-btn.active {
+      color: var(--gold-bright);
+      border-color: var(--gold-primary);
+      background: rgba(255, 145, 45, 0.14);
+      box-shadow: 0 0 20px rgba(255, 145, 45, 0.2);
+    }
+
+    .scene-btn.active::after {
+      background: var(--gold-primary);
+      box-shadow: 0 0 8px var(--gold-primary);
+    }
+
+    /* Bottom Audio Console */
+    .bottom-console {
+      position: fixed;
+      bottom: calc(4.5vh + 18px);
+      left: 32px;
+      right: 32px;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 14px 22px;
+      border-radius: 6px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+      transition: opacity 0.6s ease;
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .time-readout {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--gold-bright);
+      min-width: 48px;
+    }
+
+    .progress-wrap {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #ff7b1c, #ffdca8);
+      box-shadow: 0 0 12px #ff9d3b;
+      border-radius: 3px;
+    }
+
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 157, 59, 0.1);
+      border: 1px solid rgba(255, 157, 59, 0.35);
+      color: var(--gold-bright);
+      padding: 8px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255, 157, 59, 0.24);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 15px rgba(255, 157, 59, 0.3);
+    }
+
+    .ctrl-btn.primary {
+      background: rgba(255, 157, 59, 0.22);
+      border-color: var(--gold-primary);
+      font-weight: 500;
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 85px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--gold-bright);
+      box-shadow: 0 0 8px var(--gold-primary);
+      cursor: pointer;
+    }
+
+    /* Launch Modal Overlay */
+    #launchOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: radial-gradient(circle at center, rgba(6, 9, 18, 0.65) 0%, rgba(2, 3, 6, 0.94) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 32px;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.9s;
+    }
+
+    #launchOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .launch-card {
+      max-width: 620px;
+      padding: 44px 48px;
+      background: rgba(8, 11, 20, 0.78);
+      border: 1px solid rgba(255, 175, 95, 0.32);
+      border-radius: 6px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9), 0 0 60px rgba(255, 140, 40, 0.12);
+      position: relative;
+    }
+
+    .launch-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.42em;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .launch-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      color: var(--gold-bright);
+      margin-bottom: 12px;
+      text-shadow: 0 0 30px rgba(255, 157, 59, 0.5);
+    }
+
+    .launch-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 19px;
+      line-height: 1.55;
+      color: rgba(243, 237, 226, 0.78);
+      margin-bottom: 32px;
+    }
+
+    .launch-btn {
+      background: linear-gradient(135deg, rgba(255, 157, 59, 0.28), rgba(255, 110, 20, 0.12));
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-bright);
+      padding: 15px 36px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 28px rgba(255, 157, 59, 0.25);
+    }
+
+    .launch-btn:hover {
+      background: rgba(255, 157, 59, 0.38);
+      box-shadow: 0 0 42px rgba(255, 157, 59, 0.55);
+      transform: scale(1.03);
+    }
+
+    .launch-hint {
+      margin-top: 22px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    /* Floating Cinema Toggle when in Cinema Mode */
+    .cinema-floating-exit {
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      z-index: 6;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    body.cinema-mode .cinema-floating-exit {
+      opacity: 0.65;
+      pointer-events: auto;
+    }
+    body.cinema-mode .cinema-floating-exit:hover {
+      opacity: 1;
+    }
+
+    @media (max-width: 860px) {
+      .telemetry-grid { display: none; }
+      .scene-selector {
+        top: auto;
+        bottom: calc(4.5vh + 135px);
+        right: 16px;
+        transform: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .top-hud { left: 16px; right: 16px; }
+      .bottom-console { left: 16px; right: 16px; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WebGL Gargantua & Cosmos Canvas -->
+  <canvas id="glcanvas"></canvas>
+
+  <!-- 2D Endurance Docking Ring, Organ Spectrum & Tesseract Overlay -->
+  <canvas id="overlayCanvas"></canvas>
+
+  <!-- Letterbox Bars -->
+  <div class="letterbox top"></div>
+  <div class="letterbox bottom"></div>
+
+  <!-- Launch Modal -->
+  <div id="launchOverlay">
+    <div class="launch-card">
+      <div class="launch-eyebrow">NASA Lazarus // Endurance Expedition</div>
+      <h1 class="launch-title">INTERSTELLAR</h1>
+      <p class="launch-desc">
+        “No entres dócilmente en esa buena noche... Ruge, ruge contra la agonía de la luz.”<br/>
+        Visualizador astrofísico en tiempo real sincronizado con la partitura de Hans Zimmer.
+      </p>
+      <button id="startExperienceBtn" class="launch-btn">Iniciar Secuencia &amp; Audio</button>
+      <div class="launch-hint">Arrastra el cursor para orbitar Gargantua • Rueda para zoom • [Espacio] Pausa</div>
+    </div>
+  </div>
+
+  <!-- Exit Cinema Mode Button -->
+  <button id="exitCinemaBtn" class="ctrl-btn cinema-floating-exit">Salir Modo Cine [C]</button>
+
+  <!-- Top Telemetry HUD -->
+  <header class="top-hud hud-hideable">
+    <div class="brand-block">
+      <span class="mission-tag">ENDURANCE TELEMETRY // HANS ZIMMER SCORE</span>
+      <h2 class="title-main">GARGANTUA</h2>
+      <div id="poeticQuote" class="subtitle-quote">“El amor es lo único que somos capaces de percibir que trasciende el tiempo y el espacio.”</div>
+    </div>
+
+    <div class="telemetry-grid">
+      <div class="telemetry-item">
+        <span class="telemetry-label">Dilatación Temporal</span>
+        <span id="timeDilationVal" class="telemetry-val">1h = 7.00 Años</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Rotación Endurance</span>
+        <span id="spinRpmVal" class="telemetry-val">67.8 RPM</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Horizonte de Sucesos</span>
+        <span id="horizonRadiusVal" class="telemetry-val">1.00 Rs</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Resonancia de Órgano</span>
+        <span id="organPeakVal" class="telemetry-val">0.0 dB</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Reloj Terrestre (+Años)</span>
+        <span id="earthYearsVal" class="telemetry-val">+0.000 y</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Fase Visual</span>
+        <span id="phaseNameVal" class="telemetry-val">AUTO // SINCRONÍA</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Right Scene Selector -->
+  <nav class="scene-selector hud-hideable" aria-label="Modos de Escena">
+    <button class="scene-btn active" data-scene="0">00 // Auto Narrativo</button>
+    <button class="scene-btn" data-scene="1">01 // Gargantua Singularidad</button>
+    <button class="scene-btn" data-scene="2">02 // Acoplamiento (No Time For Caution)</button>
+    <button class="scene-btn" data-scene="3">03 // Agujero de Gusano</button>
+    <button class="scene-btn" data-scene="4">04 // El Teseracto 5D (STAY)</button>
+  </nav>
+
+  <!-- Bottom Audio & Visual Controls -->
+  <section class="bottom-console hud-hideable">
+    <div class="timeline-row">
+      <span id="currentTimeLabel" class="time-readout">00:00</span>
+      <div id="progressBar" class="progress-wrap" title="Haz clic para buscar en la canción">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <span id="durationTimeLabel" class="time-readout">00:00</span>
+    </div>
+
+    <div class="controls-row">
+      <div class="left-controls">
+        <button id="playPauseBtn" class="ctrl-btn primary">▶ Reproducir</button>
+        <button id="restartBtn" class="ctrl-btn">↺ Reiniciar</button>
+        <div class="slider-group">
+          <span>Vol</span>
+          <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.9" />
+        </div>
+      </div>
+
+      <div class="right-controls">
+        <div class="slider-group">
+          <span>Reactividad</span>
+          <input id="reactivitySlider" type="range" min="0.3" max="2.2" step="0.05" value="1.25" />
+        </div>
+        <button id="morseBtn" class="ctrl-btn" title="Emitir pulso gravitacional S-T-A-Y">Pulso "STAY"</button>
+        <button id="cinemaModeBtn" class="ctrl-btn" title="Ocultar interfaz (Tecla C)">Modo Cine [C]</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audio Source -->
+  <audio id="themeAudio" src="Interstellar%20theme%20song.mp3" preload="auto" crossorigin="anonymous"></audio>
+
+  <script>
+    // ============================================================================
+    // 1. AUDIO ENGINE & FREQUENCY ANALYZER
+    // ============================================================================
+    const audioEl = document.getElementById('themeAudio');
+    const launchOverlay = document.getElementById('launchOverlay');
+    const startExperienceBtn = document.getElementById('startExperienceBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const reactivitySlider = document.getElementById('reactivitySlider');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const currentTimeLabel = document.getElementById('currentTimeLabel');
+    const durationTimeLabel = document.getElementById('durationTimeLabel');
+    const cinemaModeBtn = document.getElementById('cinemaModeBtn');
+    const exitCinemaBtn = document.getElementById('exitCinemaBtn');
+    const morseBtn = document.getElementById('morseBtn');
+
+    // Telemetry DOM refs
+    const timeDilationVal = document.getElementById('timeDilationVal');
+    const spinRpmVal = document.getElementById('spinRpmVal');
+    const horizonRadiusVal = document.getElementById('horizonRadiusVal');
+    const organPeakVal = document.getElementById('organPeakVal');
+    const earthYearsVal = document.getElementById('earthYearsVal');
+    const phaseNameVal = document.getElementById('phaseNameVal');
+    const poeticQuote = document.getElementById('poeticQuote');
+
+    let audioCtx = null;
+    let analyser = null;
+    let sourceNode = null;
+    let freqData = new Uint8Array(512);
+    let timeData = new Uint8Array(512);
+    let audioInitialized = false;
+
+    // Smoothed audio metrics
+    const audioState = {
+      subBass: 0,    // 20 - 80 Hz (Gravitational waves / Black hole pulse)
+      bass: 0,       // 80 - 250 Hz (Accretion disk warmth & density)
+      organMid: 0,   // 250 - 2000 Hz (Hans Zimmer church organ chords)
+      highs: 0,      // 2000 - 12000 Hz (Starlight shimmer, arpeggios, dust)
+      energy: 0,     // Overall RMS intensity
+      peakImpulse: 0 // Sudden crescendo flash
+    };
+
+    function initAudioGraph() {
+      if (audioInitialized) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 1024;
+        analyser.smoothingTimeConstant = 0.82;
+
+        sourceNode = audioCtx.createMediaElementSource(audioEl);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        timeData = new Uint8Array(analyser.frequencyBinCount);
+        audioInitialized = true;
+      } catch (err) {
+        console.warn('Web Audio API fallback activo:', err);
+      }
+    }
+
+    async function startPlayback() {
+      initAudioGraph();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      try {
+        await audioEl.play();
+        playPauseBtn.textContent = '⏸ Pausar';
+        launchOverlay.classList.add('hidden');
+      } catch (e) {
+        console.warn('Interacción requerida para iniciar audio:', e);
+      }
+    }
+
+    startExperienceBtn.addEventListener('click', startPlayback);
+
+    playPauseBtn.addEventListener('click', async () => {
+      initAudioGraph();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+      if (audioEl.paused) {
+        await audioEl.play();
+        playPauseBtn.textContent = '⏸ Pausar';
+      } else {
+        audioEl.pause();
+        playPauseBtn.textContent = '▶ Reproducir';
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      audioEl.currentTime = 0;
+      earthYearsElapsed = 0;
+      if (audioEl.paused) startPlayback();
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+      audioEl.volume = parseFloat(e.target.value);
+    });
+
+    progressBar.addEventListener('click', (e) => {
+      if (!audioEl.duration) return;
+      const rect = progressBar.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audioEl.currentTime = ratio * audioEl.duration;
+    });
+
+    function formatSeconds(sec) {
+      if (!isFinite(sec) || sec < 0) return '00:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    audioEl.addEventListener('loadedmetadata', () => {
+      durationTimeLabel.textContent = formatSeconds(audioEl.duration);
+    });
+
+    audioEl.addEventListener('ended', () => {
+      playPauseBtn.textContent = '▶ Reproducir';
+    });
+
+    // Cinema mode & shortcuts
+    function toggleCinemaMode() {
+      document.body.classList.toggle('cinema-mode');
+    }
+    cinemaModeBtn.addEventListener('click', toggleCinemaMode);
+    exitCinemaBtn.addEventListener('click', toggleCinemaMode);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && e.target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        playPauseBtn.click();
+      } else if (e.key === 'c' || e.key === 'C') {
+        toggleCinemaMode();
+      }
+    });
+
+    // Narrative quotes & scene selection
+    const quotes = [
+      "“El amor es lo único que somos capaces de percibir que trasciende el tiempo y el espacio.”",
+      "“Solíamos mirar hacia arriba en el cielo y maravillarnos con nuestro lugar en las estrellas.”",
+      "“No es posible.” — “No. Es necesario.” (Secuencia de acoplamiento Endurance)",
+      "“El tiempo es relativo, puede estirarse y comprimirse, pero no puede retroceder.”",
+      "“No me dejes ir, Murph... S - T - A - Y.”"
+    ];
+
+    let selectedSceneMode = 0; // 0 = Auto Narrative, 1 = Gargantua, 2 = Docking, 3 = Wormhole, 4 = Tesseract
+    const sceneButtons = document.querySelectorAll('.scene-btn');
+    sceneButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        sceneButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedSceneMode = parseInt(btn.dataset.scene, 10);
+        poeticQuote.textContent = quotes[selectedSceneMode] || quotes[0];
+      });
+    });
+
+    // S-T-A-Y Gravitational Morse Anomaly Pulse
+    let stayPulseTimer = 0;
+    morseBtn.addEventListener('click', () => {
+      stayPulseTimer = 1.0;
+      poeticQuote.textContent = "ANOMALÍA GRAVITACIONAL DETECTADA // ···  −  ·−  −·−−  (S · T · A · Y)";
+    });
+
+    // Update Audio Spectrum
+    let prevEnergy = 0;
+    function updateAudioMetrics(dt, elapsedSec) {
+      const sensitivity = parseFloat(reactivitySlider.value);
+
+      if (audioInitialized && !audioEl.paused) {
+        analyser.getByteFrequencyData(freqData);
+        analyser.getByteTimeDomainData(timeData);
+
+        const avgRange = (startBin, endBin) => {
+          let sum = 0;
+          for (let i = startBin; i <= endBin; i++) sum += freqData[i];
+          return (sum / ((endBin - startBin + 1) * 255)) * sensitivity;
+        };
+
+        const rawSub = avgRange(1, 5);
+        const rawBass = avgRange(6, 18);
+        const rawOrgan = avgRange(19, 95);
+        const rawHighs = avgRange(96, 260);
+
+        audioState.subBass += (rawSub - audioState.subBass) * Math.min(1, dt * 10);
+        audioState.bass += (rawBass - audioState.bass) * Math.min(1, dt * 9);
+        audioState.organMid += (rawOrgan - audioState.organMid) * Math.min(1, dt * 8);
+        audioState.highs += (rawHighs - audioState.highs) * Math.min(1, dt * 12);
+
+        const rawEnergy = (rawSub * 0.35 + rawBass * 0.3 + rawOrgan * 0.25 + rawHighs * 0.1);
+        audioState.energy += (rawEnergy - audioState.energy) * Math.min(1, dt * 7);
+
+        const delta = Math.max(0, rawEnergy - prevEnergy);
+        if (delta > 0.12) {
+          audioState.peakImpulse = Math.min(1.5, audioState.peakImpulse + delta * 2.5);
+        }
+        prevEnergy = rawEnergy;
+      } else {
+        // Autonomous procedural Hans Zimmer breathing cadence when paused or before start
+        const breath = 0.5 + 0.5 * Math.sin(elapsedSec * 0.85);
+        const tick = Math.pow(0.5 + 0.5 * Math.sin(elapsedSec * Math.PI * 1.6), 8.0); // Miller's planet 1.25s tick
+        audioState.subBass = (0.22 + 0.18 * breath + 0.25 * tick) * sensitivity * 0.7;
+        audioState.bass = (0.20 + 0.15 * Math.sin(elapsedSec * 0.5)) * sensitivity * 0.7;
+        audioState.organMid = (0.18 + 0.22 * Math.pow(breath, 2.0)) * sensitivity * 0.7;
+        audioState.highs = (0.12 + 0.18 * tick) * sensitivity * 0.7;
+        audioState.energy = (audioState.subBass + audioState.organMid) * 0.5;
+
+        // Fill synthetic wave for the cathedral organ visualizer
+        for (let i = 0; i < freqData.length; i++) {
+          const norm = i / freqData.length;
+          const wave = Math.sin(norm * 18.0 - elapsedSec * 2.2) * Math.cos(norm * 7.0 + elapsedSec * 1.1);
+          freqData[i] = Math.max(0, Math.floor((Math.abs(wave) * 95 + tick * 65) * Math.exp(-norm * 2.4)));
+        }
+      }
+
+      audioState.peakImpulse *= Math.pow(0.08, dt);
+      if (stayPulseTimer > 0) {
+        stayPulseTimer = Math.max(0, stayPulseTimer - dt * 0.45);
+      }
+    }
+
+    // ============================================================================
+    // 2. WEBGL RELATIVISTIC GARGANTUA, WORMHOLE & TESSERACT SHADER
+    // ============================================================================
+    const glCanvas = document.getElementById('glcanvas');
+    const gl = glCanvas.getContext('webgl', { antialias: false, depth: false, stencil: false });
+
+    const vertexShaderSrc = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = aPos * 0.5 + 0.5;
+        gl_Position = vec4(aPos, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentShaderSrc = `
+      precision highp float;
+      varying vec2 vUv;
+
+      uniform vec2 uResolution;
+      uniform float uTime;
+      uniform vec2 uCameraOrbit;
+      uniform float uZoom;
+      uniform vec4 uAudio;       // x: subBass, y: bass, z: organMid, w: highs
+      uniform float uImpulse;
+      uniform float uStayPulse;
+      uniform float uWormholeMix;
+      uniform float uTesseractMix;
+
+      #define PI 3.14159265359
+
+      // Fast hash & 3D value noise for relativistic plasma filaments
+      float hash(vec3 p) {
+        p = fract(p * vec3(443.897, 441.423, 437.195));
+        p += dot(p, p.yzx + 19.19);
+        return fract((p.x + p.y) * p.z);
+      }
+
+      float noise(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x),
+              mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+          mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+              mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
+          f.z
+        );
+      }
+
+      float fbm(vec3 p) {
+        float v = 0.0;
+        float a = 0.5;
+        for (int i = 0; i < 4; i++) {
+          v += a * noise(p);
+          p = p * 2.07 + vec3(13.1, 7.7, 5.3);
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      mat3 rotateY(float a) {
+        float c = cos(a), s = sin(a);
+        return mat3(c, 0, s, 0, 1, 0, -s, 0, c);
+      }
+
+      mat3 rotateX(float a) {
+        float c = cos(a), s = sin(a);
+        return mat3(1, 0, 0, 0, c, -s, 0, s, c);
+      }
+
+      mat3 rotateZ(float a) {
+        float c = cos(a), s = sin(a);
+        return mat3(c, -s, 0, s, c, 0, 0, 0, 1);
+      }
+
+      // Deep starfield & lensed Einstein ring nebula
+      vec3 sampleCosmos(vec3 dir, float highs) {
+        vec3 p = dir * 180.0;
+        float s1 = pow(hash(floor(p)), 26.0);
+        float s2 = pow(hash(floor(dir * 95.0 + 17.0)), 18.0);
+        float twinkle = 0.65 + 0.35 * sin(uTime * 4.0 + dir.x * 90.0);
+
+        // Galactic dust band
+        float band = exp(-abs(dir.y + 0.15 * sin(dir.x * 2.5)) * 4.5);
+        float dust = fbm(dir * 4.0 + vec3(0.0, 0.0, uTime * 0.02));
+
+        vec3 nebCol = mix(vec3(0.03, 0.05, 0.11), vec3(0.24, 0.14, 0.07), dust) * band * 0.85;
+        vec3 stars = vec3(1.0, 0.92, 0.82) * s1 * (1.8 + highs * 3.0) * twinkle
+                   + vec3(0.65, 0.82, 1.0) * s2 * 1.4;
+        return nebCol + stars;
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
+
+        float subBass = uAudio.x;
+        float bass = uAudio.y;
+        float organ = uAudio.z;
+        float highs = uAudio.w;
+
+        // Subtle gravitational wave distortion on space-time metric
+        if (uStayPulse > 0.001) {
+          float wave = sin(length(uv) * 28.0 - uTime * 14.0) * exp(-length(uv) * 2.5);
+          uv += normalize(uv + 0.0001) * wave * 0.018 * uStayPulse;
+        }
+
+        // Camera setup with subtle organ-driven cinematic roll
+        float camDist = uZoom - subBass * 0.38;
+        vec3 ro = vec3(0.0, 0.0, camDist);
+        vec3 rd = normalize(vec3(uv, -1.35));
+
+        float pitch = uCameraOrbit.y;
+        float yaw = uCameraOrbit.x;
+        float roll = 0.12 * sin(uTime * 0.18) + uCameraOrbit.x * 0.15;
+
+        mat3 camRot = rotateY(yaw) * rotateX(pitch) * rotateZ(roll);
+        ro = camRot * ro;
+        rd = camRot * rd;
+
+        // Black hole Schwarzschild parameters
+        float rs = 1.0 + subBass * 0.14 + uImpulse * 0.08;
+        float diskInner = rs * 1.42;
+        float diskOuter = rs * (6.2 + organ * 1.8);
+
+        vec3 pos = ro;
+        vec3 dir = rd;
+
+        vec3 accumDisk = vec3(0.0);
+        float alphaDisk = 0.0;
+        bool swallowed = false;
+        float minR = 100.0;
+
+        // Relativistic Geodesic Raymarching around Gargantua
+        const int STEPS = 76;
+        for (int i = 0; i < STEPS; i++) {
+          float r = length(pos);
+          minR = min(minR, r);
+
+          if (r < rs) {
+            swallowed = true;
+            break;
+          }
+          if (r > 18.0) {
+            break;
+          }
+
+          // Adaptive step size near photon sphere
+          float dt = max(0.032, (r - rs * 0.82) * 0.11);
+
+          // Gravitational geodesic deflection (Einstein-Schwarzschild bending)
+          float bendStrength = (1.65 + uWormholeMix * 0.65) * rs / (r * r * r + 0.001);
+          vec3 accel = -pos * bendStrength;
+          vec3 nextDir = normalize(dir + accel * dt);
+          vec3 nextPos = pos + nextDir * dt;
+
+          // Volumetric & Equatorial Accretion Disk intersection
+          float diskHalfThickness = 0.065 + 0.045 * organ + 0.025 * (r / diskOuter);
+          if (abs(pos.y) < diskHalfThickness * 2.4 || (pos.y * nextPos.y <= 0.0)) {
+            float tCross = abs(pos.y) / (abs(pos.y - nextPos.y) + 0.0001);
+            vec3 hit = mix(pos, nextPos, clamp(tCross, 0.0, 1.0));
+            float hr = length(hit.xz);
+
+            if (hr > diskInner && hr < diskOuter) {
+              float radialNorm = (hr - diskInner) / (diskOuter - diskInner);
+              float radialFalloff = smoothstep(0.0, 0.09, radialNorm) * pow(1.0 - radialNorm, 1.35);
+              float verticalFalloff = exp(-abs(hit.y) / diskHalfThickness);
+
+              // Differential Keplerian orbital velocity
+              float angle = atan(hit.z, hit.x);
+              float orbitalSpeed = uTime * (2.6 / pow(hr, 0.85));
+
+              // Concentric relativistic plasma rings + turbulence
+              vec3 sampleCoord = vec3(
+                hr * 3.8,
+                sin(angle + orbitalSpeed) * 2.2,
+                cos(angle + orbitalSpeed) * 2.2
+              );
+              float plasma = fbm(sampleCoord);
+              float rings = 0.55 + 0.45 * sin(hr * 19.0 - uTime * 3.5 + plasma * 5.0);
+
+              // Relativistic Doppler beaming (approaching side blue/white-hot, receding side deep amber-red)
+              vec3 tangent = normalize(vec3(-hit.z, 0.0, hit.x));
+              float doppler = dot(tangent, dir);
+
+              vec3 hotCore = vec3(1.0, 0.95, 0.86);
+              vec3 midGold = vec3(1.0, 0.56, 0.16);
+              vec3 deepCrimson = vec3(0.62, 0.12, 0.03);
+              vec3 blueShift = vec3(0.68, 0.86, 1.0);
+
+              vec3 diskCol = mix(midGold, hotCore, smoothstep(0.0, 0.85, (1.0 - radialNorm) + organ * 0.4));
+              diskCol = mix(diskCol, deepCrimson, smoothstep(0.0, 0.75, doppler));
+              diskCol = mix(diskCol, blueShift, smoothstep(0.15, 0.85, -doppler) * (0.45 + highs * 0.45));
+
+              // Wormhole cyan/indigo shift when in Wormhole phase
+              if (uWormholeMix > 0.01) {
+                vec3 wormCol = mix(vec3(0.25, 0.65, 1.0), vec3(0.85, 0.75, 1.0), 1.0 - radialNorm);
+                diskCol = mix(diskCol, wormCol, uWormholeMix * 0.75);
+              }
+
+              float beamingBoost = clamp(1.0 - doppler * 0.65, 0.35, 2.1);
+              float audioBoost = 1.0 + bass * 1.15 + organ * 0.95 + uImpulse * 0.75;
+
+              float sampleDensity = radialFalloff * verticalFalloff * (0.35 + 0.65 * plasma * rings) * 0.42;
+              accumDisk += (1.0 - alphaDisk) * diskCol * sampleDensity * beamingBoost * audioBoost * 2.6;
+              alphaDisk = min(0.98, alphaDisk + sampleDensity * 0.55);
+            }
+          }
+
+          pos = nextPos;
+          dir = nextDir;
+        }
+
+        vec3 finalColor = vec3(0.0);
+
+        // Background lensed stars if ray escaped the event horizon
+        if (!swallowed) {
+          vec3 sky = sampleCosmos(dir, highs);
+          // Einstein ring gravitational amplification near photon sphere
+          float einsteinRing = exp(-max(0.0, minR - rs * 1.04) * 7.5);
+          sky += vec3(1.0, 0.82, 0.58) * einsteinRing * (0.65 + organ * 0.9);
+          finalColor = sky * (1.0 - alphaDisk * 0.85);
+        }
+
+        // Photon sphere razor-thin relativistic halo right at the shadow edge
+        float photonRing = exp(-abs(minR - rs * 1.035) * 26.0);
+        vec3 photonCol = mix(vec3(1.0, 0.72, 0.36), vec3(0.75, 0.9, 1.0), uWormholeMix);
+        finalColor += photonCol * photonRing * (0.85 + subBass * 1.1 + uImpulse);
+
+        // Add volumetric accretion disk
+        finalColor += accumDisk;
+
+        // 5D Tesseract Light Lattice Matrix (blends in during Phase 4 / STAY)
+        if (uTesseractMix > 0.01) {
+          vec3 tp = ro + rd * 2.4;
+          vec3 grid = abs(fract(tp * 2.2 + vec3(0.0, uTime * 0.12, 0.0)) - 0.5);
+          float beams = exp(-min(min(grid.x, grid.y), grid.z) * 32.0);
+          float harmonics = 0.5 + 0.5 * sin(tp.x * 8.0 + uTime * 3.0) * cos(tp.y * 8.0 - uTime * 2.0);
+          vec3 tessCol = mix(vec3(1.0, 0.65, 0.25), vec3(1.0, 0.92, 0.75), harmonics) * beams * (0.6 + organ * 1.4);
+          finalColor += tessCol * uTesseractMix * smoothstep(rs * 0.85, rs * 2.2, minR);
+        }
+
+        // Subtle anamorphic horizontal lens flare (Christopher Nolan / Hoyte van Hoytema signature)
+        float flareY = exp(-abs(uv.y) * 28.0);
+        float flareX = exp(-abs(uv.x) * 1.6);
+        vec3 anamorphic = mix(vec3(1.0, 0.62, 0.22), vec3(0.45, 0.75, 1.0), 0.35 + uWormholeMix * 0.5)
+                        * flareY * flareX * (0.18 + organ * 0.42 + uImpulse * 0.45);
+        finalColor += anamorphic;
+
+        // ACES Filmic Tonemapping & Gamma
+        finalColor = (finalColor * (2.51 * finalColor + 0.03)) / (finalColor * (2.43 * finalColor + 0.59) + 0.14);
+        finalColor = pow(clamp(finalColor, 0.0, 1.0), vec3(0.92));
+
+        // Subtle vignette
+        float vig = 1.0 - dot(uv * 0.55, uv * 0.55);
+        finalColor *= clamp(vig, 0.2, 1.0);
+
+        gl_FragColor = vec4(finalColor, 1.0);
+      }
+    `;
+
+    function compileShader(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+      }
+      return shader;
+    }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vertexShaderSrc));
+    gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSrc));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const quadBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1
+    ]), gl.STATIC_DRAW);
+
+    const aPosLoc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(aPosLoc);
+    gl.vertexAttribPointer(aPosLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const uniforms = {
+      uResolution: gl.getUniformLocation(prog, 'uResolution'),
+      uTime: gl.getUniformLocation(prog, 'uTime'),
+      uCameraOrbit: gl.getUniformLocation(prog, 'uCameraOrbit'),
+      uZoom: gl.getUniformLocation(prog, 'uZoom'),
+      uAudio: gl.getUniformLocation(prog, 'uAudio'),
+      uImpulse: gl.getUniformLocation(prog, 'uImpulse'),
+      uStayPulse: gl.getUniformLocation(prog, 'uStayPulse'),
+      uWormholeMix: gl.getUniformLocation(prog, 'uWormholeMix'),
+      uTesseractMix: gl.getUniformLocation(prog, 'uTesseractMix')
+    };
+
+    // Interactive Camera Orbit & Zoom State
+    let camYaw = 0.18;
+    let camPitch = 0.19;
+    let targetYaw = 0.18;
+    let targetPitch = 0.19;
+    let camZoom = 6.2;
+    let targetZoom = 6.2;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    glCanvas.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      targetYaw -= dx * 0.0055;
+      targetPitch = Math.max(-1.1, Math.min(1.1, targetPitch + dy * 0.0055));
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    window.addEventListener('wheel', (e) => {
+      targetZoom = Math.max(3.4, Math.min(10.5, targetZoom + e.deltaY * 0.003));
+    }, { passive: true });
+
+    // ============================================================================
+    // 3. 2D OVERLAY: ENDURANCE DOCKING RING, CATHEDRAL ORGAN & 5D TESSERACT STRINGS
+    // ============================================================================
+    const overlayCanvas = document.getElementById('overlayCanvas');
+    const ctx = overlayCanvas.getContext('2d');
+
+    function resizeCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      glCanvas.width = Math.floor(window.innerWidth * dpr);
+      glCanvas.height = Math.floor(window.innerHeight * dpr);
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+
+      overlayCanvas.width = Math.floor(window.innerWidth * dpr);
+      overlayCanvas.height = Math.floor(window.innerHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    let enduranceAngle = 0;
+    let earthYearsElapsed = 0;
+    let smoothWormhole = 0;
+    let smoothTesseract = 0;
+    let smoothDocking = 0;
+
+    // Draw the 12-module Endurance spacecraft ring and docking reticle ("No Time For Caution")
+    function drawEnduranceRing(w, h, dt, dockingIntensity) {
+      if (dockingIntensity < 0.02) return;
+
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const radius = Math.min(w, h) * (0.29 + audioState.subBass * 0.03);
+
+      // 67.8 RPM angular speed boosted by organ crescendo
+      const rpm = 12.0 + 55.8 * dockingIntensity + audioState.organMid * 22.0;
+      enduranceAngle += (rpm * Math.PI / 30) * dt * 0.35;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.globalAlpha = dockingIntensity * 0.85;
+
+      // Outer precision telemetry compass ticks
+      ctx.strokeStyle = 'rgba(255, 195, 125, 0.28)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 72; i++) {
+        const a = (i / 72) * Math.PI * 2 - enduranceAngle * 0.25;
+        const inner = radius * 1.12;
+        const outer = inner + (i % 6 === 0 ? 10 : 4);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+        ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+        ctx.stroke();
+      }
+
+      // Rotating 12 Endurance habitat modules around the ring
+      ctx.save();
+      ctx.rotate(enduranceAngle);
+
+      // Ring structural truss
+      ctx.strokeStyle = 'rgba(255, 175, 95, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let m = 0; m < 12; m++) {
+        const binIndex = Math.min(freqData.length - 1, m * 6 + 4);
+        const modEnergy = (freqData[binIndex] || 0) / 255;
+        const modAngle = (m / 12) * Math.PI * 2;
+
+        ctx.save();
+        ctx.rotate(modAngle);
+        ctx.translate(radius, 0);
+
+        // Habitat module box
+        const mw = 12 + modEnergy * 8;
+        const mh = 22;
+        ctx.fillStyle = `rgba(255, ${Math.floor(185 + modEnergy * 65)}, ${Math.floor(110 + modEnergy * 90)}, ${0.45 + modEnergy * 0.5})`;
+        ctx.strokeStyle = 'rgba(255, 230, 185, 0.85)';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(-mw * 0.5, -mh * 0.5, mw, mh);
+        ctx.strokeRect(-mw * 0.5, -mh * 0.5, mw, mh);
+
+        // Radial docking spoke toward center
+        if (m % 3 === 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(255, 180, 100, 0.2)';
+          ctx.moveTo(-mw * 0.5, 0);
+          ctx.lineTo(-radius * 0.42, 0);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+
+      // Central Docking Reticle Crosshair
+      ctx.strokeStyle = 'rgba(110, 198, 255, 0.45)';
+      ctx.lineWidth = 1;
+      const crossSize = 24 + audioState.peakImpulse * 14;
+      ctx.beginPath();
+      ctx.arc(0, 0, crossSize, 0, Math.PI * 2);
+      ctx.moveTo(-crossSize * 1.6, 0);
+      ctx.lineTo(crossSize * 1.6, 0);
+      ctx.moveTo(0, -crossSize * 1.6);
+      ctx.lineTo(0, crossSize * 1.6);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Draw 5D Tesseract Strings & S-T-A-Y Morse Code Timeline
+    function drawTesseractOverlay(w, h, elapsedSec, tessIntensity) {
+      const totalAlpha = Math.max(tessIntensity, stayPulseTimer);
+      if (totalAlpha < 0.02) return;
+
+      ctx.save();
+      ctx.globalAlpha = totalAlpha * 0.72;
+
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const numStrings = 36;
+
+      // Vertical & Horizontal 5th-Dimension Gravity Strings plucked by audio frequencies
+      for (let i = 0; i < numStrings; i++) {
+        const t = i / (numStrings - 1);
+        const x = w * (0.08 + 0.84 * t);
+        const bin = Math.min(freqData.length - 1, i * 3 + 2);
+        const amp = ((freqData[bin] || 0) / 255) * 28 * totalAlpha;
+
+        ctx.beginPath();
+        ctx.strokeStyle = i % 3 === 0
+          ? `rgba(255, 220, 165, ${0.18 + amp * 0.015})`
+          : `rgba(255, 145, 55, ${0.12 + amp * 0.01})`;
+        ctx.lineWidth = i % 4 === 0 ? 1.5 : 0.8;
+
+        ctx.moveTo(x, 0);
+        const waveOffset = Math.sin(elapsedSec * 5.0 + i * 0.7) * amp;
+        ctx.quadraticCurveTo(x + waveOffset, cy, x, h);
+        ctx.stroke();
+      }
+
+      // Morse Code S-T-A-Y (···  −  ·−  −·−−) Golden Gravity Bars near top center
+      const morsePattern = [1,0,1,0,1, 0,0, 3, 0,0, 1,0,3, 0,0, 3,0,1,0,3,0,3];
+      const totalUnits = morsePattern.reduce((a, b) => a + (b || 1), 0);
+      const unitW = 8;
+      let curX = cx - (totalUnits * unitW) * 0.5;
+      const morseY = h * 0.16;
+
+      morsePattern.forEach((symbol, idx) => {
+        if (symbol > 0) {
+          const barW = symbol * unitW;
+          const pulse = 0.5 + 0.5 * Math.sin(elapsedSec * 7.0 - idx * 0.6);
+          ctx.fillStyle = `rgba(255, 215, 150, ${0.35 + 0.55 * pulse})`;
+          ctx.shadowColor = '#ff9d3b';
+          ctx.shadowBlur = 12 * pulse;
+          ctx.fillRect(curX, morseY, barW, 4);
+          curX += barW;
+        } else {
+          curX += unitW;
+        }
+      });
+
+      ctx.restore();
+    }
+
+    // Draw Hans Zimmer Cathedral Pipe Organ Symmetric Spectrum along lower horizon
+    function drawCathedralOrganSpectrum(w, h) {
+      ctx.save();
+      const baseY = h - (document.body.classList.contains('cinema-mode') ? h * 0.085 : h * 0.175);
+      const centerX = w * 0.5;
+      const pipes = 48;
+      const maxSpan = Math.min(w * 0.42, 540);
+      const spacing = maxSpan / pipes;
+
+      for (let i = 0; i < pipes; i++) {
+        const bin = Math.min(freqData.length - 1, Math.floor(i * 1.8) + 2);
+        const val = (freqData[bin] || 0) / 255;
+        const barH = Math.max(2, Math.pow(val, 1.35) * 78);
+        const alpha = 0.18 + val * 0.65;
+
+        ctx.fillStyle = `rgba(255, ${Math.floor(165 + val * 80)}, ${Math.floor(85 + val * 120)}, ${alpha})`;
+
+        // Right pipe
+        ctx.fillRect(centerX + i * spacing + 2, baseY - barH, spacing * 0.58, barH);
+        // Left mirrored pipe
+        ctx.fillRect(centerX - (i + 1) * spacing + 2, baseY - barH, spacing * 0.58, barH);
+      }
+      ctx.restore();
+    }
+
+    // ============================================================================
+    // 4. MASTER ANIMATION LOOP & TELEMETRY SYNCHRONIZATION
+    // ============================================================================
+    let lastTime = performance.now();
+
+    function determineNarrativePhase(progressRatio) {
+      if (selectedSceneMode !== 0) {
+        return {
+          name: [
+            'AUTO // SINCRONÍA',
+            '01 // GARGANTUA',
+            '02 // ACOPLAMIENTO',
+            '03 // AGUJERO DE GUSANO',
+            '04 // EL TESERACTO 5D'
+          ][selectedSceneMode],
+          docking: selectedSceneMode === 2 ? 1.0 : 0.15,
+          wormhole: selectedSceneMode === 3 ? 1.0 : 0.0,
+          tesseract: selectedSceneMode === 4 ? 1.0 : 0.0
+        };
+      }
+
+      // Automatic progression along the Interstellar theme song
+      if (progressRatio < 0.25) {
+        return { name: 'FASE I // HORIZONTE GARGANTUA', docking: 0.15, wormhole: 0.0, tesseract: 0.0 };
+      } else if (progressRatio < 0.52) {
+        return { name: 'FASE II // AGUJERO DE GUSANO', docking: 0.25, wormhole: 0.85, tesseract: 0.0 };
+      } else if (progressRatio < 0.78) {
+        return { name: 'FASE III // NO TIME FOR CAUTION', docking: 1.0, wormhole: 0.15, tesseract: 0.15 };
+      } else {
+        return { name: 'FASE IV // EL TESERACTO (STAY)', docking: 0.45, wormhole: 0.2, tesseract: 1.0 };
+      }
+    }
+
+    function animate(now) {
+      const dt = Math.min(0.1, (now - lastTime) * 0.001);
+      lastTime = now;
+      const elapsedSec = now * 0.001;
+
+      updateAudioMetrics(dt, elapsedSec);
+
+      // Update timeline & narrative state
+      const duration = audioEl.duration || 180;
+      const curTime = audioEl.currentTime || 0;
+      const progressRatio = duration > 0 ? curTime / duration : (elapsedSec % 120) / 120;
+
+      if (!audioEl.paused && audioEl.duration) {
+        progressFill.style.width = `${(progressRatio * 100).toFixed(2)}%`;
+        currentTimeLabel.textContent = formatSeconds(curTime);
+      }
+
+      const phase = determineNarrativePhase(progressRatio);
+      smoothDocking += (phase.docking - smoothDocking) * Math.min(1, dt * 2.5);
+      smoothWormhole += (phase.wormhole - smoothWormhole) * Math.min(1, dt * 2.0);
+      smoothTesseract += (phase.tesseract - smoothTesseract) * Math.min(1, dt * 2.0);
+
+      // Gentle autonomous orbital drift when user is not dragging
+      if (!isDragging) {
+        targetYaw += dt * (0.07 + audioState.organMid * 0.08);
+        targetPitch = 0.17 * Math.sin(elapsedSec * 0.22) + 0.06 * Math.cos(elapsedSec * 0.37);
+      }
+      camYaw += (targetYaw - camYaw) * Math.min(1, dt * 6);
+      camPitch += (targetPitch - camPitch) * Math.min(1, dt * 6);
+      camZoom += (targetZoom - camZoom) * Math.min(1, dt * 6);
+
+      // Render WebGL Relativistic Black Hole Shader
+      gl.useProgram(prog);
+      gl.uniform2f(uniforms.uResolution, glCanvas.width, glCanvas.height);
+      gl.uniform1f(uniforms.uTime, elapsedSec);
+      gl.uniform2f(uniforms.uCameraOrbit, camYaw, camPitch);
+      gl.uniform1f(uniforms.uZoom, camZoom);
+      gl.uniform4f(
+        uniforms.uAudio,
+        audioState.subBass,
+        audioState.bass,
+        audioState.organMid,
+        audioState.highs
+      );
+      gl.uniform1f(uniforms.uImpulse, audioState.peakImpulse);
+      gl.uniform1f(uniforms.uStayPulse, stayPulseTimer);
+      gl.uniform1f(uniforms.uWormholeMix, smoothWormhole);
+      gl.uniform1f(uniforms.uTesseractMix, Math.max(smoothTesseract, stayPulseTimer));
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // Render 2D Overlay (Endurance Ring, Cathedral Organ, 5D Tesseract Strings)
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      drawTesseractOverlay(w, h, elapsedSec, smoothTesseract);
+      drawEnduranceRing(w, h, dt, smoothDocking);
+      drawCathedralOrganSpectrum(w, h);
+
+      // Update Relativistic Telemetry Readouts
+      // 1 hour on Miller's planet = 7 years on Earth (0.001944 Earth years per second)
+      const dilationFactor = 7.0 + audioState.subBass * 2.4;
+      earthYearsElapsed += dt * (dilationFactor / 3600) * 18.0;
+
+      timeDilationVal.textContent = `1h = ${dilationFactor.toFixed(2)} Años`;
+      const currentRpm = 12.0 + 55.8 * smoothDocking + audioState.organMid * 22.0;
+      spinRpmVal.textContent = `${currentRpm.toFixed(1)} RPM`;
+      horizonRadiusVal.textContent = `${(1.0 + audioState.subBass * 0.14).toFixed(2)} Rs`;
+      const dbVal = (audioState.organMid * 36.0).toFixed(1);
+      organPeakVal.textContent = `+${dbVal} dB`;
+      earthYearsVal.textContent = `+${earthYearsElapsed.toFixed(3)} y`;
+      phaseNameVal.textContent = phase.name;
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
