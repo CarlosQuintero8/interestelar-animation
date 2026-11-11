@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>INTERSTELLAR // Gargantua & The Tesseract</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -476,67 +477,67 @@
       <div class="launch-eyebrow">NASA Lazarus // Endurance Expedition</div>
       <h1 class="launch-title">INTERSTELLAR</h1>
       <p class="launch-desc">
-        “No entres dócilmente en esa buena noche... Ruge, ruge contra la agonía de la luz.”<br/>
-        Visualizador astrofísico en tiempo real sincronizado con la partitura de Hans Zimmer.
+        “Do not go gentle into that good night... Rage, rage against the dying of the light.”<br/>
+        Real-time astrophysical visualizer synchronized with Hans Zimmer's score.
       </p>
-      <button id="startExperienceBtn" class="launch-btn">Iniciar Secuencia &amp; Audio</button>
-      <div class="launch-hint">Arrastra el cursor para orbitar Gargantua • Rueda para zoom • [Espacio] Pausa</div>
+      <button id="startExperienceBtn" class="launch-btn">Initialize Sequence &amp; Audio</button>
+      <div class="launch-hint">Drag cursor to orbit Gargantua • Scroll to zoom • [Space] Play/Pause</div>
     </div>
   </div>
 
   <!-- Exit Cinema Mode Button -->
-  <button id="exitCinemaBtn" class="ctrl-btn cinema-floating-exit">Salir Modo Cine [C]</button>
+  <button id="exitCinemaBtn" class="ctrl-btn cinema-floating-exit">Exit Cinema Mode [C]</button>
 
   <!-- Top Telemetry HUD -->
   <header class="top-hud hud-hideable">
     <div class="brand-block">
       <span class="mission-tag">ENDURANCE TELEMETRY // HANS ZIMMER SCORE</span>
       <h2 class="title-main">GARGANTUA</h2>
-      <div id="poeticQuote" class="subtitle-quote">“El amor es lo único que somos capaces de percibir que trasciende el tiempo y el espacio.”</div>
+      <div id="poeticQuote" class="subtitle-quote">“Love is the one thing we're capable of perceiving that transcends dimensions of time and space.”</div>
     </div>
 
     <div class="telemetry-grid">
       <div class="telemetry-item">
-        <span class="telemetry-label">Dilatación Temporal</span>
-        <span id="timeDilationVal" class="telemetry-val">1h = 7.00 Años</span>
+        <span class="telemetry-label">Time Dilation</span>
+        <span id="timeDilationVal" class="telemetry-val">1h = 7.00 Years</span>
       </div>
       <div class="telemetry-item">
-        <span class="telemetry-label">Rotación Endurance</span>
+        <span class="telemetry-label">Endurance Spin</span>
         <span id="spinRpmVal" class="telemetry-val">67.8 RPM</span>
       </div>
       <div class="telemetry-item">
-        <span class="telemetry-label">Horizonte de Sucesos</span>
+        <span class="telemetry-label">Event Horizon</span>
         <span id="horizonRadiusVal" class="telemetry-val">1.00 Rs</span>
       </div>
       <div class="telemetry-item">
-        <span class="telemetry-label">Resonancia de Órgano</span>
+        <span class="telemetry-label">Organ Resonance</span>
         <span id="organPeakVal" class="telemetry-val">0.0 dB</span>
       </div>
       <div class="telemetry-item">
-        <span class="telemetry-label">Reloj Terrestre (+Años)</span>
+        <span class="telemetry-label">Earth Clock (+Years)</span>
         <span id="earthYearsVal" class="telemetry-val">+0.000 y</span>
       </div>
       <div class="telemetry-item">
-        <span class="telemetry-label">Fase Visual</span>
-        <span id="phaseNameVal" class="telemetry-val">AUTO // SINCRONÍA</span>
+        <span class="telemetry-label">Visual Phase</span>
+        <span id="phaseNameVal" class="telemetry-val">AUTO // SYNCHRONY</span>
       </div>
     </div>
   </header>
 
   <!-- Right Scene Selector -->
-  <nav class="scene-selector hud-hideable" aria-label="Modos de Escena">
-    <button class="scene-btn active" data-scene="0">00 // Auto Narrativo</button>
-    <button class="scene-btn" data-scene="1">01 // Gargantua Singularidad</button>
-    <button class="scene-btn" data-scene="2">02 // Acoplamiento (No Time For Caution)</button>
-    <button class="scene-btn" data-scene="3">03 // Agujero de Gusano</button>
-    <button class="scene-btn" data-scene="4">04 // El Teseracto 5D (STAY)</button>
+  <nav class="scene-selector hud-hideable" aria-label="Scene Modes">
+    <button class="scene-btn active" data-scene="0">00 // Auto Narrative</button>
+    <button class="scene-btn" data-scene="1">01 // Gargantua Singularity</button>
+    <button class="scene-btn" data-scene="2">02 // Docking (No Time For Caution)</button>
+    <button class="scene-btn" data-scene="3">03 // Wormhole Transit</button>
+    <button class="scene-btn" data-scene="4">04 // 5D Tesseract (STAY)</button>
   </nav>
 
   <!-- Bottom Audio & Visual Controls -->
   <section class="bottom-console hud-hideable">
     <div class="timeline-row">
       <span id="currentTimeLabel" class="time-readout">00:00</span>
-      <div id="progressBar" class="progress-wrap" title="Haz clic para buscar en la canción">
+      <div id="progressBar" class="progress-wrap" title="Click to seek in the track">
         <div id="progressFill" class="progress-fill"></div>
       </div>
       <span id="durationTimeLabel" class="time-readout">00:00</span>
@@ -544,8 +545,8 @@
 
     <div class="controls-row">
       <div class="left-controls">
-        <button id="playPauseBtn" class="ctrl-btn primary">▶ Reproducir</button>
-        <button id="restartBtn" class="ctrl-btn">↺ Reiniciar</button>
+        <button id="playPauseBtn" class="ctrl-btn primary">▶ Play</button>
+        <button id="restartBtn" class="ctrl-btn">↺ Restart</button>
         <div class="slider-group">
           <span>Vol</span>
           <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.9" />
@@ -554,11 +555,11 @@
 
       <div class="right-controls">
         <div class="slider-group">
-          <span>Reactividad</span>
+          <span>Reactivity</span>
           <input id="reactivitySlider" type="range" min="0.3" max="2.2" step="0.05" value="1.25" />
         </div>
-        <button id="morseBtn" class="ctrl-btn" title="Emitir pulso gravitacional S-T-A-Y">Pulso "STAY"</button>
-        <button id="cinemaModeBtn" class="ctrl-btn" title="Ocultar interfaz (Tecla C)">Modo Cine [C]</button>
+        <button id="morseBtn" class="ctrl-btn" title="Emit gravitational S-T-A-Y anomaly pulse">"STAY" Pulse</button>
+        <button id="cinemaModeBtn" class="ctrl-btn" title="Hide HUD interface (Key C)">Cinema Mode [C]</button>
       </div>
     </div>
   </section>
@@ -628,7 +629,7 @@
         timeData = new Uint8Array(analyser.frequencyBinCount);
         audioInitialized = true;
       } catch (err) {
-        console.warn('Web Audio API fallback activo:', err);
+        console.warn('Web Audio API fallback active:', err);
       }
     }
 
@@ -639,10 +640,10 @@
       }
       try {
         await audioEl.play();
-        playPauseBtn.textContent = '⏸ Pausar';
+        playPauseBtn.textContent = '⏸ Pause';
         launchOverlay.classList.add('hidden');
       } catch (e) {
-        console.warn('Interacción requerida para iniciar audio:', e);
+        console.warn('User interaction required to start audio:', e);
       }
     }
 
@@ -655,10 +656,10 @@
       }
       if (audioEl.paused) {
         await audioEl.play();
-        playPauseBtn.textContent = '⏸ Pausar';
+        playPauseBtn.textContent = '⏸ Pause';
       } else {
         audioEl.pause();
-        playPauseBtn.textContent = '▶ Reproducir';
+        playPauseBtn.textContent = '▶ Play';
       }
     });
 
@@ -691,7 +692,7 @@
     });
 
     audioEl.addEventListener('ended', () => {
-      playPauseBtn.textContent = '▶ Reproducir';
+      playPauseBtn.textContent = '▶ Play';
     });
 
     // Cinema mode & shortcuts
@@ -712,11 +713,11 @@
 
     // Narrative quotes & scene selection
     const quotes = [
-      "“El amor es lo único que somos capaces de percibir que trasciende el tiempo y el espacio.”",
-      "“Solíamos mirar hacia arriba en el cielo y maravillarnos con nuestro lugar en las estrellas.”",
-      "“No es posible.” — “No. Es necesario.” (Secuencia de acoplamiento Endurance)",
-      "“El tiempo es relativo, puede estirarse y comprimirse, pero no puede retroceder.”",
-      "“No me dejes ir, Murph... S - T - A - Y.”"
+      "“Love is the one thing we're capable of perceiving that transcends dimensions of time and space.”",
+      "“We used to look up at the sky and wonder at our place in the stars.”",
+      "“It's not possible.” — “No. It's necessary.” (Endurance Docking Sequence)",
+      "“Time is relative, okay? It can stretch and it can squeeze, but it can't run backwards.”",
+      "“Don't let me leave, Murph!... S - T - A - Y.”"
     ];
 
     let selectedSceneMode = 0; // 0 = Auto Narrative, 1 = Gargantua, 2 = Docking, 3 = Wormhole, 4 = Tesseract
@@ -734,7 +735,7 @@
     let stayPulseTimer = 0;
     morseBtn.addEventListener('click', () => {
       stayPulseTimer = 1.0;
-      poeticQuote.textContent = "ANOMALÍA GRAVITACIONAL DETECTADA // ···  −  ·−  −·−−  (S · T · A · Y)";
+      poeticQuote.textContent = "GRAVITATIONAL ANOMALY DETECTED // ···  −  ·−  −·−−  (S · T · A · Y)";
     });
 
     // Update Audio Spectrum
@@ -1329,11 +1330,11 @@
       if (selectedSceneMode !== 0) {
         return {
           name: [
-            'AUTO // SINCRONÍA',
+            'AUTO // SYNCHRONY',
             '01 // GARGANTUA',
-            '02 // ACOPLAMIENTO',
-            '03 // AGUJERO DE GUSANO',
-            '04 // EL TESERACTO 5D'
+            '02 // DOCKING',
+            '03 // WORMHOLE TRANSIT',
+            '04 // 5D TESSERACT'
           ][selectedSceneMode],
           docking: selectedSceneMode === 2 ? 1.0 : 0.15,
           wormhole: selectedSceneMode === 3 ? 1.0 : 0.0,
@@ -1343,13 +1344,13 @@
 
       // Automatic progression along the Interstellar theme song
       if (progressRatio < 0.25) {
-        return { name: 'FASE I // HORIZONTE GARGANTUA', docking: 0.15, wormhole: 0.0, tesseract: 0.0 };
+        return { name: 'PHASE I // GARGANTUA HORIZON', docking: 0.15, wormhole: 0.0, tesseract: 0.0 };
       } else if (progressRatio < 0.52) {
-        return { name: 'FASE II // AGUJERO DE GUSANO', docking: 0.25, wormhole: 0.85, tesseract: 0.0 };
+        return { name: 'PHASE II // WORMHOLE TRANSIT', docking: 0.25, wormhole: 0.85, tesseract: 0.0 };
       } else if (progressRatio < 0.78) {
-        return { name: 'FASE III // NO TIME FOR CAUTION', docking: 1.0, wormhole: 0.15, tesseract: 0.15 };
+        return { name: 'PHASE III // NO TIME FOR CAUTION', docking: 1.0, wormhole: 0.15, tesseract: 0.15 };
       } else {
-        return { name: 'FASE IV // EL TESERACTO (STAY)', docking: 0.45, wormhole: 0.2, tesseract: 1.0 };
+        return { name: 'PHASE IV // THE TESSERACT (STAY)', docking: 0.45, wormhole: 0.2, tesseract: 1.0 };
       }
     }
 
@@ -1417,7 +1418,7 @@
       const dilationFactor = 7.0 + audioState.subBass * 2.4;
       earthYearsElapsed += dt * (dilationFactor / 3600) * 18.0;
 
-      timeDilationVal.textContent = `1h = ${dilationFactor.toFixed(2)} Años`;
+      timeDilationVal.textContent = `1h = ${dilationFactor.toFixed(2)} Years`;
       const currentRpm = 12.0 + 55.8 * smoothDocking + audioState.organMid * 22.0;
       spinRpmVal.textContent = `${currentRpm.toFixed(1)} RPM`;
       horizonRadiusVal.textContent = `${(1.0 + audioState.subBass * 0.14).toFixed(2)} Rs`;

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a0d04" />
+      <stop offset="70%" stop-color="#06070c" />
+      <stop offset="100%" stop-color="#020306" />
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="48%">
+      <stop offset="38%" stop-color="#000000" stop-opacity="1" />
+      <stop offset="44%" stop-color="#fff4db" stop-opacity="1" />
+      <stop offset="56%" stop-color="#ff9d3b" stop-opacity="0.85" />
+      <stop offset="75%" stop-color="#c84b0f" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="disk" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ff6a00" stop-opacity="0" />
+      <stop offset="18%" stop-color="#ff9d3b" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#fff5e0" stop-opacity="1" />
+      <stop offset="82%" stop-color="#ff8c24" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#ff6a00" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Space Background -->
+  <circle cx="32" cy="32" r="31" fill="url(#bg)" stroke="#ff9d3b" stroke-opacity="0.28" stroke-width="1" />
+
+  <!-- Lensed Gravitational Halo (Top & Bottom Arc) -->
+  <circle cx="32" cy="32" r="24" fill="url(#halo)" />
+
+  <!-- Upper Lensed Einstein Arc -->
+  <path d="M 11 31 A 21 19 0 0 1 53 31" fill="none" stroke="#ffcf8b" stroke-width="2.2" stroke-opacity="0.85" />
+
+  <!-- Lower Lensed Einstein Arc -->
+  <path d="M 14 34 A 18 15 0 0 0 50 34" fill="none" stroke="#ff8822" stroke-width="1.6" stroke-opacity="0.65" />
+
+  <!-- Event Horizon Shadow -->
+  <circle cx="32" cy="32" r="11.5" fill="#020204" stroke="#ffe7bd" stroke-width="1.1" />
+
+  <!-- Relativistic Equatorial Accretion Disk -->
+  <ellipse cx="32" cy="32.5" rx="29" ry="4.2" fill="url(#disk)" transform="rotate(-11 32 32)" />
+  <ellipse cx="32" cy="32.5" rx="22" ry="1.6" fill="#ffffff" fill-opacity="0.85" transform="rotate(-11 32 32)" />
+</svg>
